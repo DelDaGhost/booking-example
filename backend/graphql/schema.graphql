@@ -1,5 +1,14 @@
-"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
-scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+"A date string with format `Y-m-d`, e.g. `2011-05-23`."
+scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
+
+input BookRoomInput @validator {
+    firstname: String!
+    lastname: String!
+    email: String!
+    from: Date!
+    until: Date!
+    roomId: Int!
+}
 
 type Room {
     id: Int!
@@ -7,6 +16,22 @@ type Room {
     price: Int!
 }
 
-extend type Query {
-    availableRooms: [Room!]!
+type Booking {
+    id: Int!
+    firstname: String!
+    lastname: String!
+    email: String!
+    from: Date!
+    until: Date!
+    room: Room! @belongsTo
+}
+
+type Query {
+    rooms: [Room!]!
+    bookings(roomId: Int @rules(apply: ["exists:rooms,id"])): [Booking!]!
+}
+
+
+type Mutation {
+    bookRoom(input: BookRoomInput!): Booking!
 }
