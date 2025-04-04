@@ -3,16 +3,10 @@
 namespace App\GraphQL\Queries;
 
 use App\Models\Room;
-use App\Repositories\RoomRepository;
 use Illuminate\Database\Eloquent\Collection;
 
-final class AvailableRooms
+final class Rooms
 {
-    public function __construct(
-        private RoomRepository $roomRepository,
-    ) {
-    }
-
     /**
      * @param  null  $_
      * @param  array{}  $args
@@ -20,6 +14,6 @@ final class AvailableRooms
      */
     public function __invoke($_, array $args): Collection
     {
-        return $this->roomRepository->getAvailableRooms();
+        return Room::all();
     }
 }
