@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # PHP-FPM Service
+  app:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile  # Path to Dockerfile in the docker folder
+    container_name: php-fpm
+    volumes:
+      - .:/var/www  # Map the backend folder to the container's /var/www/html
+    networks:
+      - laravel-network
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=your_db_name
+      - DB_USERNAME=your_db_user
+      - DB_PASSWORD=your_db_password
+    depends_on:
+      - postgres
+
+  # Nginx Service
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ../docker/nginx.conf:/etc/nginx/nginx.conf  # Path to nginx.conf in the docker folder
+      - .:/var/www  # Map the backend folder to the container's /var/www/html
+    ports:
+      - "8090:80"
+    networks:
+      - laravel-network
+    depends_on:
+      - app
+
+  # PostgreSQL Service
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_DB: your_db_name
+      POSTGRES_USER: your_db_user
+      POSTGRES_PASSWORD: your_db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - laravel-network
+
+# Volumes
+volumes:
+  postgres_data:
+
+# Networks
+networks:
+  laravel-network:
+    driver: bridge
