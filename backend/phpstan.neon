@@ -1,0 +1,19 @@
+parameters:
+    level: 8
+    paths:
+      - app
+      - tests
+    excludePaths:
+      - app/Http/*
+      - app/Providers/*
+      - tests/Feature/ExampleTest.php
+      - tests/Unit/ExampleTest.php
+    scanFiles:
+      - _ide_helper.php
+    ignoreErrors:
+      -
+          message: '#Call to an undefined method Mockery\\#'
+          path: tests/*
+      -
+          message: '#Parameter .* expects .*, Mockery\\.*MockInterface given.#'
+          path: tests/*
