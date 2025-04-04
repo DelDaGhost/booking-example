@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   # PHP-FPM Service
   app:
     build:
-      context: ..
-      dockerfile: ./docker/Dockerfile  # Path to Dockerfile in the docker folder
+      context: .
+      dockerfile: ../docker/php-fpm/Dockerfile  # Path to Dockerfile in the docker folder
     container_name: php-fpm
     volumes:
       - .:/var/www  # Map the backend folder to the container's /var/www/html
@@ -19,7 +17,7 @@ services:
     image: nginx:latest
     container_name: nginx
     volumes:
-      - ../docker/nginx.conf:/etc/nginx/nginx.conf  # Path to nginx.conf in the docker folder
+      - ../docker/nginx/nginx.conf:/etc/nginx/nginx.conf  # Path to nginx.conf in the docker folder
       - .:/var/www  # Map the backend folder to the container's /var/www/html
     ports:
       - "8090:80"
