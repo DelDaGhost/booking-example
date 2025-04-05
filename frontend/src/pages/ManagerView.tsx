@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, gql } from "@apollo/client";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addDays } from "date-fns";
 
 const GET_ROOMS = gql`
     query {
@@ -47,7 +47,7 @@ export default function ManagerView() {
             id: b.id.toString(),
             title: `${b.firstname} ${b.lastname}`,
             start: b.from,
-            end: b.until,
+            end: format(addDays(parseISO(b.until), 1), "yyyy-MM-dd"),
             allDay: true,
         })) || [];
 
