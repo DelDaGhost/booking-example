@@ -2,6 +2,7 @@ import { useQuery, gql } from "@apollo/client";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import { format, subDays } from "date-fns";
 
 const BOOKINGS_QUERY = gql`
     query GetBookings($roomId: Int!) {
@@ -40,12 +41,14 @@ export default function BookingCalendar({
             <FullCalendar
                 plugins={[dayGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
-                firstDay={1} // Start on Monday
+                firstDay={1}
                 selectable={true}
                 select={(info) => {
+                    const startStr = format(info.start, "yyyy-MM-dd");
+                    const untilStr = format(subDays(info.end, 1), "yyyy-MM-dd");
                     onSelectDates({
-                        from: info.startStr,
-                        until: info.endStr,
+                        from: startStr,
+                        until: untilStr,
                     });
                 }}
                 events={events}
