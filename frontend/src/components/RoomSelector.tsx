@@ -1,10 +1,21 @@
-export default function RoomSelector({
-                                         onSelect,
-                                         roomsData,
-                                     }: {
-    onSelect: (id: number) => void;
-    roomsData: { id: number; name: string }[];
-}) {
+import { useQuery, gql } from "@apollo/client";
+
+const ROOMS_QUERY = gql`
+    query GetRooms {
+        rooms {
+            id
+            name
+            price
+        }
+    }
+`;
+
+export default function RoomSelector({ onSelect }: { onSelect: (id: number) => void }) {
+    const { data, loading, error } = useQuery(ROOMS_QUERY);
+
+    if (loading) return <div>Loading rooms...</div>;
+    if (error) return <div>Error loading rooms.</div>;
+
     return (
         <div>
             <label className="block mb-1 font-medium">Choose a room</label>
@@ -16,9 +27,9 @@ export default function RoomSelector({
                 <option value="" disabled>
                     Select a room
                 </option>
-                {roomsData.map((room) => (
+                {data.rooms.map((room: any) => (
                     <option key={room.id} value={room.id}>
-                        {room.name}
+                        {room.name} (Price: {room.price}.-)
                     </option>
                 ))}
             </select>
