@@ -1,10 +1,12 @@
+import { useState, useEffect } from "react";
 import { gql, useMutation } from "@apollo/client";
-import { useState } from "react";
 
 const BOOK_ROOM = gql`
     mutation BookRoom($input: BookRoomInput!) {
         bookRoom(input: $input) {
             id
+            from
+            until
         }
     }
 `;
@@ -12,67 +14,126 @@ const BOOK_ROOM = gql`
 export default function BookingForm({
                                         roomId,
                                         dateRange,
+                                        roomPrice,
                                         onPriceCalculated,
+                                        onBookingComplete,
                                     }: {
     roomId: number;
     dateRange: { from: string; until: string };
+    roomPrice: number;
     onPriceCalculated: (price: number) => void;
+    onBookingComplete: () => void;
 }) {
-    const [form, setForm] = useState({ firstname: "", lastname: "", email: "" });
-    const [submitRoom] = useMutation(BOOK_ROOM);
+    const [firstname, setFirstname] = useState("");
+    const [lastname, setLastname] = useState("");
+    const [email, setEmail] = useState("");
+
+    const [bookRoom, { loading, error }] = useMutation(BOOK_ROOM, {
+        onCompleted: () => {
+            setFirstname("");
+            setLastname("");
+            setEmail("");
+            onBookingComplete();
+        },
+    });
+
+    const numberOfNights = Math.ceil(
+        (new Date(dateRange.until).getTime() - new Date(dateRange.from).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    const totalPrice = numberOfNights * roomPrice;
+
+    useEffect(() => {
+        onPriceCalculated(totalPrice);
+    }, [totalPrice, onPriceCalculated]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const days =
-            (new Date(dateRange.until).getTime() - new Date(dateRange.from).getTime()) /
-            (1000 * 60 * 60 * 24);
-        const pricePerNight = 100; // TODO: fetch room price if dynamic
-        const total = days * pricePerNight;
+        const adjustedUntil = new Date(
+            new Date(dateRange.until).getTime() - 86400000
+        )
+            .toISOString()
+            .slice(0, 10);
 
-        onPriceCalculated(total);
-
-        await submitRoom({
+        await bookRoom({
             variables: {
                 input: {
-                    ...form,
-                    from: dateRange.from,
-                    until: dateRange.until,
                     roomId,
+                    from: dateRange.from,
+                    until: adjustedUntil,
+                    firstname,
+                    lastname,
+                    email,
                 },
             },
         });
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <label className="block">
-                First Name
+        <form
+            onSubmit={handleSubmit}
+            className="space-y-4 p-4 border rounded-lg shadow-sm bg-white"
+        >
+            <h2 className="text-lg font-semibold">Book this room</h2>
+
+            <div>
+                <label className="block mb-1 font-medium">First name</label>
                 <input
+                    type="text"
+                    className="w-full border px-2 py-1 rounded"
+                    value={firstname}
+                    onChange={(e) => setFirstname(e.target.value)}
                     required
-                    className="border rounded w-full px-3 py-2 mt-1"
-                    onChange={(e) => setForm({ ...form, firstname: e.target.value })}
                 />
-            </label>
-            <label className="block">
-                Last Name
+            </div>
+
+            <div>
+                <label className="block mb-1 font-medium">Last name</label>
                 <input
+                    type="text"
+                    className="w-full border px-2 py-1 rounded"
+                    value={lastname}
+                    onChange={(e) => setLastname(e.target.value)}
                     required
-                    className="border rounded w-full px-3 py-2 mt-1"
-                    onChange={(e) => setForm({ ...form, lastname: e.target.value })}
                 />
-            </label>
-            <label className="block">
-                Email
+            </div>
+
+            <div>
+                <label className="block mb-1 font-medium">Email</label>
                 <input
                     type="email"
+                    className="w-full border px-2 py-1 rounded"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="border rounded w-full px-3 py-2 mt-1"
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
-            </label>
-            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
-                Confirm Booking
+            </div>
+
+            <div className="text-sm text-gray-600">
+                Booking from <strong>{dateRange.from}</strong> to{" "}
+                <strong>
+                    {
+                        new Date(new Date(dateRange.until).getTime() - 86400000)
+                            .toISOString()
+                            .slice(0, 10)
+                    }
+                </strong>
+            </div>
+
+            {error && (
+                <div className="text-red-600 text-sm">
+                    Failed to book room. Please try again.
+                </div>
+            )}
+
+            <button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+                {loading ? "Booking..." : "Book Now"}
             </button>
         </form>
     );
