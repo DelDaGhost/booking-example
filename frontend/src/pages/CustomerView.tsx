@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { useQuery, gql } from "@apollo/client";
 import RoomSelector from "../components/RoomSelector";
 import BookingCalendar from "../components/BookingCalendar";
 import BookingForm from "../components/BookingForm";
 import PriceSummary from "../components/PriceSummary";
-import { useQuery, gql } from "@apollo/client";
 
 const ROOMS_QUERY = gql`
     query {
@@ -15,15 +15,25 @@ const ROOMS_QUERY = gql`
     }
 `;
 
+type Booking = {
+    id: number;
+    from: string;
+    until: string;
+};
+
 export default function CustomerView() {
-    const { data, loading } = useQuery(ROOMS_QUERY);
+    const { data, loading, error } = useQuery(ROOMS_QUERY);
     const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
     const [selectedDates, setSelectedDates] = useState<{ from: string; until: string } | null>(null);
     const [price, setPrice] = useState<number | null>(null);
+    const [bookings, setBookings] = useState<Booking[]>([]);
 
-    if (loading || !data) return <div>Loading...</div>;
+    if (loading || error || !data || !data.rooms) return <div>Loading...</div>;
 
-    const selectedRoom = data.rooms.find((room: any) => room.id === selectedRoomId);
+    const handleNewBooking = (newBooking: Booking) => {
+        setBookings((prev) => [...prev, newBooking]);
+        setSelectedDates(null); // Optionally clear the selection after booking
+    };
 
     return (
         <div className="p-4 max-w-6xl mx-auto space-y-6">
@@ -37,26 +47,24 @@ export default function CustomerView() {
                     <div className="md:w-2/3 w-full">
                         <BookingCalendar
                             roomId={selectedRoomId}
-                            onSelectDates={(range) => {
-                                setSelectedDates(range);
-                            }}
                             selectedDates={selectedDates}
+                            onSelectDates={setSelectedDates}
+                            additionalBookings={bookings}
                         />
                     </div>
 
                     {/* Right column: Form and price */}
                     <div className="md:w-1/3 w-full space-y-4">
-                        {selectedDates && selectedRoom && (
+                        {selectedDates && (
                             <>
                                 <BookingForm
                                     roomId={selectedRoomId}
+                                    roomPrice={
+                                        data.rooms.find((r: any) => r.id === selectedRoomId).price
+                                    }
                                     dateRange={selectedDates}
-                                    roomPrice={selectedRoom.price}
+                                    onBookingComplete={handleNewBooking}
                                     onPriceCalculated={setPrice}
-                                    onBookingComplete={() => {
-                                        setSelectedDates(null);
-                                        setPrice(null);
-                                    }}
                                 />
                                 {price !== null && <PriceSummary price={price} />}
                             </>

@@ -15,42 +15,32 @@ export default function BookingForm({
                                         roomId,
                                         dateRange,
                                         roomPrice,
-                                        onPriceCalculated,
                                         onBookingComplete,
+                                        onPriceCalculated,
                                     }: {
     roomId: number;
     dateRange: { from: string; until: string };
     roomPrice: number;
+    onBookingComplete: (booking: { id: number; from: string; until: string }) => void;
     onPriceCalculated: (price: number) => void;
-    onBookingComplete: () => void;
 }) {
     const [firstname, setFirstname] = useState("");
     const [lastname, setLastname] = useState("");
     const [email, setEmail] = useState("");
 
     const [bookRoom, { loading, error }] = useMutation(BOOK_ROOM, {
-        onCompleted: () => {
+        onCompleted: (data) => {
             setFirstname("");
             setLastname("");
             setEmail("");
-            onBookingComplete();
+            onBookingComplete(data.bookRoom);
         },
     });
-
-    const numberOfNights = Math.ceil(
-        (new Date(dateRange.until).getTime() - new Date(dateRange.from).getTime()) /
-        (1000 * 60 * 60 * 24)
-    );
-
-    const totalPrice = numberOfNights * roomPrice;
-
-    useEffect(() => {
-        onPriceCalculated(totalPrice);
-    }, [totalPrice, onPriceCalculated]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Adjust the end date to be inclusive (subtract 1 day from exclusive FullCalendar end)
         const adjustedUntil = new Date(
             new Date(dateRange.until).getTime() - 86400000
         )
@@ -70,6 +60,17 @@ export default function BookingForm({
             },
         });
     };
+
+    const numberOfNights =
+        Math.ceil(
+            (new Date(dateRange.until).getTime() - new Date(dateRange.from).getTime()) /
+            (1000 * 60 * 60 * 24)
+        ) || 0;
+    const totalPrice = numberOfNights * roomPrice;
+
+    useEffect(() => {
+        onPriceCalculated(totalPrice);
+    }, [totalPrice, onPriceCalculated]);
 
     return (
         <form
