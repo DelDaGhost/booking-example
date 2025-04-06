@@ -16,6 +16,7 @@ const BOOKINGS_QUERY = gql`
 export default function BookingCalendar({
                                             roomId,
                                             onSelectDates,
+                                            selectedDates,
                                             additionalBookings = [],
                                         }: {
     roomId: number;
@@ -40,13 +41,26 @@ export default function BookingCalendar({
             .toISOString()
             .slice(0, 10),
         allDay: true,
+        // Changed booked events color to a strong red (#dc2626)
+        color: "#dc2626",
     }));
+
+    // Render the selected date range (unchanged)
+    if (selectedDates) {
+        events.push({
+            title: "Selected",
+            start: selectedDates.from,
+            end: selectedDates.until,
+            allDay: true,
+            color: "#93c5fd", // blue, remains the same
+        });
+    }
 
     return (
         <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
-            firstDay={1}
+            firstDay={1} // Start on Monday
             selectable={true}
             select={(info) =>
                 onSelectDates({
